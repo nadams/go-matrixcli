@@ -6,6 +6,9 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"time"
+
+	"github.com/nadams/go-matrixcli/config"
 )
 
 var m sync.Mutex
@@ -15,46 +18,51 @@ type Auth struct {
 }
 
 type AccountAuth struct {
-	Name  string `json:"name"`
-	Token string `json:"token"`
+	Name   string `json:"name"`
+	UserID string `json:"userId"`
+	Token  string `json:"token"`
 }
 
-func Token(name, cacheDir string, client http.Client) (string, error) {
-	m.Lock()
-	defer m.Unlock()
+type TokenStore struct {
+	config   *config.Config
+	client   *http.Client
+	accounts []AccountAuth
+}
 
-	path := filepath.Join(cacheDir, "auth.json")
-
-	var auth *Auth
-
-	if _, err := os.Stat(path); !os.IsNotExist(err) {
-		auth, _ = loadAuth(path)
+func NewTokenStore(c *config.Config) (*TokenStore, error) {
+	t := &TokenStore{
+		config: c,
+		client: &http.Client{Timeout: time.Second * 30},
 	}
 
-	for _, a := range auth.Accounts {
-		if a.Name == name {
-			return a.Token, nil
+	fi, err := os.Stat(filepath.Join(c.CacheDir, "accounts.json"))
+	if os.IsNotExist(err) {
+		t.accounts = []AccountAuth{}
+	} else {
+		f, err := os.Open(filepath.Join(c.CacheDir, fi.Name()))
+		if err != nil {
+			return nil, err
+		}
+
+		defer f.Close()
+
+		if err := json.NewDecoder(f).Decode(&t.accounts); err != nil {
+			return nil, err
 		}
 	}
 
-	// TODO: fetch a new token if account doesn't exist
-
-	return "", nil
+	return t, nil
 }
 
-func loadAuth(path string) (*Auth, error) {
-	f, err := os.Open(path)
-	if err != nil {
-		return nil, err
+func (t *TokenStore) Token(name string) (AccountAuth, error) {
+	m.Lock()
+	defer m.Unlock()
+
+	for _, account := range t.accounts {
+		if account.Name == name {
+			return account, nil
+		}
 	}
 
-	defer f.Close()
-
-	var auth Auth
-
-	if err := json.NewDecoder(f).Decode(&auth); err != nil {
-		return nil, err
-	}
-
-	return &auth, nil
+	return AccountAuth{}, nil
 }

@@ -5,6 +5,9 @@ import (
 	"os"
 
 	"github.com/matrix-org/gomatrix"
+
+	"github.com/nadams/go-matrixcli/auth"
+	"github.com/nadams/go-matrixcli/config"
 )
 
 type Send struct {
@@ -12,23 +15,16 @@ type Send struct {
 	Msg  string `arg:"" optional:"" name:"msg" help:"Text to send to room. Leave empty to read from stdin."`
 }
 
-func (s *Send) Run(account Account) error {
-	cl, err := gomatrix.NewClient(account.Homeserver, "", "")
+func (s *Send) Run(ts *auth.TokenStore, account config.Account) error {
+	aa, err := ts.Token(account.Username)
 	if err != nil {
 		return err
 	}
 
-	resp, err := cl.Login(&gomatrix.ReqLogin{
-		Type:     "m.login.password",
-		User:     account.Username,
-		Password: account.Password,
-	})
-
+	cl, err := gomatrix.NewClient(account.Homeserver, aa.UserID, aa.Token)
 	if err != nil {
 		return err
 	}
-
-	cl.SetCredentials(resp.UserID, resp.AccessToken)
 
 	msg := s.Msg
 
