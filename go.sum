@@ -2,6 +2,8 @@ cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMT
 github.com/BurntSushi/toml v0.3.1 h1:WXkYYl6Yr3qBf1K79EBnL4mak0OimBfB0XUf9Vl28OQ=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/OneOfOne/xxhash v1.2.2/go.mod h1:HSdplMjZKSmBqAxg5vPj2TmRDmfkzw+cTzAElWljhcU=
+github.com/OpenPeeDeeP/xdg v0.2.0 h1:xr89rnllbkRkM7SV9Y++FJ8TGkbdkhhBQm5kOkGT7AE=
+github.com/OpenPeeDeeP/xdg v0.2.0/go.mod h1:tMoSueLQlMf0TCldjrJLNIjAc5qAOIcHt5REi88/Ygo=
 github.com/alecthomas/kong v0.2.2 h1:sk9ucwuUP/T4+byYEdNU13ZNYzoQRML4IsrMbbUUKLk=
 github.com/alecthomas/kong v0.2.2/go.mod h1:kQOmtJgV+Lb4aj+I2LEn40cbtawdWJ9Y8QLq+lElKxE=
 github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
