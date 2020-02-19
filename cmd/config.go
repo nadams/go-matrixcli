@@ -4,7 +4,8 @@ type CLI struct {
 	Account    string `optional:"" help:"Which account to use from the config file. If omitted the first one will be used."`
 	ConfigFile string `optional:"" type:"existingfile" help:"Specify a config file instead of looking in default locations."`
 
-	Send Send `cmd:"" help:"Send a message."`
+	Send Send      `cmd:"" help:"Send a message."`
+	List ListRooms `cmd:"" help:"List joined rooms."`
 }
 
 type Config struct {
