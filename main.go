@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -47,46 +48,19 @@ func main() {
 		CacheDir: c.CacheDir,
 	}
 
-	if cfg.CacheDir == "" {
-		cfg.CacheDir = xdg.CacheHome()
-
-		if cfg.CacheDir == "" {
-			fmt.Println("could not locate cache directory")
-			os.Exit(1)
-		}
-
-		cfg.CacheDir = filepath.Join(cfg.CacheDir, appname)
-
-		if err := os.MkdirAll(cfg.CacheDir, 0755); err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
-	}
-
 	if err := viper.Unmarshal(cfg); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
-	if len(cfg.Accounts) == 0 {
-		fmt.Println("no accounts configured!")
+	account, err := findAccount(cfg, c.Account)
+	if err != nil {
+		fmt.Println(err)
 		os.Exit(1)
 	}
 
-	var found bool
-	account := cfg.Accounts[0]
-
-	if len(c.Account) > 0 {
-		for _, a := range cfg.Accounts {
-			if a.Name == c.Account {
-				account = a
-				break
-			}
-		}
-	}
-
-	if !found && c.Account != "" {
-		fmt.Printf("could not find account %s in config\n", c.Account)
+	if err := initCache(cfg); err != nil {
+		fmt.Println(err)
 		os.Exit(1)
 	}
 
@@ -98,4 +72,42 @@ func main() {
 
 	err = ctx.Run(ts, account)
 	ctx.FatalIfErrorf(err)
+}
+
+func findAccount(cfg *config.Config, target string) (config.Account, error) {
+	if len(cfg.Accounts) == 0 {
+		return config.Account{}, errors.New("no accounts configured!")
+	}
+
+	var found bool
+	account := cfg.Accounts[0]
+
+	for _, a := range cfg.Accounts {
+		if a.Name == target {
+			account = a
+			break
+		}
+	}
+
+	if !found && target != "" {
+		return config.Account{}, fmt.Errorf("could not find account %s in config\n", target)
+	}
+
+	return account, nil
+}
+
+func initCache(cfg *config.Config) error {
+	if cfg.CacheDir == "" {
+		cfg.CacheDir = xdg.CacheHome()
+
+		if cfg.CacheDir == "" {
+			return errors.New("could not locate cache directory")
+		}
+
+		cfg.CacheDir = filepath.Join(cfg.CacheDir, appname)
+
+		return os.MkdirAll(cfg.CacheDir, 0755)
+	}
+
+	return nil
 }
