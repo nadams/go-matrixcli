@@ -32,7 +32,7 @@ $ mycmd | matrixcli send '!test:chat.mydomain.com'
 
 Message with title
 ```sh
-$ cmd-with-long-output | matrixcli send '!test:chat.mydomain.com' --title 'Backup stuff'
+$ cmd-with-long-output | matrixcli send '!test:chat.mydomain.com' --title 'Backup Stuff'
 ```
 
 ![Rich Text](.images/rich_text.png)
