@@ -11,7 +11,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/nadams/go-matrixcli/auth"
-	"github.com/nadams/go-matrixcli/cmd"
+	"github.com/nadams/go-matrixcli/cmd/matrixcli/cmd"
 	"github.com/nadams/go-matrixcli/config"
 )
 

@@ -1,2 +1,2 @@
-go-matrixcli
 config.yaml
+cmd/matrixcli/matrixcli
