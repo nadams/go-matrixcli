@@ -12,10 +12,10 @@ By default the application will look in these locations for the `config.yaml` fi
 
 ```yaml
 accounts:
-  name: default
-  homeserver: https://chat.mydomain.com
-  username: bot
-  password: securepassword
+  - name: default
+    homeserver: https://chat.mydomain.com
+    username: bot
+    password: securepassword
 ```
 
 ## Send a message
