@@ -5,8 +5,8 @@ Send and receive messages from a matrix server.
 
 By default the application will look in these locations for the `config.yaml` file:
 
-|  | Linux(and BSD) | Mac | Windows |
-| ---: | :---: | :---: | :---: |
+| Linux(and BSD) | Mac | Windows |
+| :---: | :---: | :---: |
 | `~/.config/matrixcli` | `~/Library/Application Support/matrixcli` | `%APPDATA%\matrixcli` |
 | `./config.yaml`       | `./config.yaml`                           | `.\config.yaml`       |
 
