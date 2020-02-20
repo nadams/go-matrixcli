@@ -29,3 +29,8 @@ Piped from stdin
 ```sh
 $ mycmd | matrixcli send '!test:chat.mydomain.com'
 ```
+
+Message with title
+```sh
+$ cmd-with-long-output | matrixcli send '!test:chat.mydomain.com' --title 'Some job task'
+```
