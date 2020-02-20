@@ -19,7 +19,8 @@ type CLI struct {
 	ConfigFile string `optional:"" type:"existingfile" help:"Specify a config file instead of looking in default locations."`
 	CacheDir   string `optional:"" type:"existingdir" help:"Specify an alternate cache dir location."`
 
-	Send cmd.Send `cmd:"" help:"Send a message."`
+	Send      cmd.Send      `cmd:"" help:"Send a message."`
+	ListRooms cmd.ListRooms `cmd:"" help:"List joined rooms"`
 }
 
 func main() {
