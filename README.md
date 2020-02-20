@@ -7,7 +7,7 @@ By default the application will look in these locations for the `config.yaml` fi
 
 | Linux(and BSD) | Mac | Windows |
 | :---: | :---: | :---: |
-| `~/.config/matrixcli` | `~/Library/Application Support/matrixcli` | `%APPDATA%\matrixcli` |
+| `~/.config/matrixcli/config.yaml` | `~/Library/Application Support/matrixcli/config.yaml` | `%APPDATA%\matrixcli\config.yaml` |
 | `./config.yaml`       | `./config.yaml`                           | `.\config.yaml`       |
 
 ```yaml
