@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 
@@ -11,8 +12,9 @@ import (
 )
 
 type Send struct {
-	Room string `arg:"" name:"room"`
-	Msg  string `arg:"" optional:"" name:"msg" help:"Text to send to room. Leave empty to read from stdin."`
+	Room  string `arg:"" name:"room"`
+	Title string `help:"Use rich formatting. If used, msg will be wrapped in a <blockquote> tag."`
+	Msg   string `arg:"" optional:"" name:"msg" help:"Text to send to room. Leave empty to read from stdin."`
 }
 
 func (s *Send) Run(ts *auth.TokenStore, account config.Account) error {
@@ -36,7 +38,25 @@ func (s *Send) Run(ts *auth.TokenStore, account config.Account) error {
 		msg = string(b)
 	}
 
-	_, err = cl.SendText(s.Room, msg)
+	if s.Title != "" {
+		_, err = cl.SendMessageEvent(s.Room, "m.room.message", gomatrix.HTMLMessage{
+			Body:    msg,
+			MsgType: "m.text",
+			Format:  "org.matrix.custom.html",
+			FormattedBody: fmt.Sprintf(`
+				<html>
+					<body>
+						<h1>%s</h1>
+						<blockquote>%s</blockquote>
+					</body>
+				</html>`,
+				s.Title,
+				msg,
+			),
+		})
+	} else {
+		_, err = cl.SendText(s.Room, msg)
+	}
 
 	return err
 }
