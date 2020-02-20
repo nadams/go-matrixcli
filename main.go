@@ -34,10 +34,7 @@ func main() {
 	} else {
 		viper.SetConfigName("config")
 		viper.AddConfigPath(".")
-
-		for _, dir := range xdg.ConfigDirs() {
-			viper.AddConfigPath(filepath.Join(dir, appname))
-		}
+		viper.AddConfigPath(filepath.Join(xdg.ConfigHome(), appname))
 	}
 
 	viper.SetConfigType("yaml")
@@ -76,6 +73,7 @@ func main() {
 		os.Exit(1)
 	}
 
+	var found bool
 	account := cfg.Accounts[0]
 
 	if len(c.Account) > 0 {
@@ -85,6 +83,11 @@ func main() {
 				break
 			}
 		}
+	}
+
+	if !found && c.Account != "" {
+		fmt.Printf("could not find account %s in config\n", c.Account)
+		os.Exit(1)
 	}
 
 	ts, err := auth.NewTokenStore(cfg)

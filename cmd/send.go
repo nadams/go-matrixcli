@@ -18,7 +18,7 @@ type Send struct {
 }
 
 func (s *Send) Run(ts *auth.TokenStore, account config.Account) error {
-	aa, err := ts.Token(account.Username)
+	aa, err := ts.Token(account.Name)
 	if err != nil {
 		return err
 	}

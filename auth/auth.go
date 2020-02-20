@@ -13,6 +13,8 @@ import (
 	"github.com/nadams/go-matrixcli/config"
 )
 
+const filename = "accounts.json"
+
 var m sync.Mutex
 
 type Auth struct {
@@ -32,28 +34,19 @@ type TokenStore struct {
 }
 
 func NewTokenStore(c *config.Config) (*TokenStore, error) {
-	t := &TokenStore{
-		config: c,
-		client: &http.Client{Timeout: time.Second * 30},
+	m.Lock()
+	defer m.Unlock()
+
+	accounts, err := loadFromFile(filepath.Join(c.CacheDir, filename))
+	if err != nil {
+		return nil, err
 	}
 
-	fi, err := os.Stat(filepath.Join(c.CacheDir, "accounts.json"))
-	if os.IsNotExist(err) {
-		t.accounts = []AccountAuth{}
-	} else {
-		f, err := os.Open(filepath.Join(c.CacheDir, fi.Name()))
-		if err != nil {
-			return nil, err
-		}
-
-		defer f.Close()
-
-		if err := json.NewDecoder(f).Decode(&t.accounts); err != nil {
-			return nil, err
-		}
-	}
-
-	return t, nil
+	return &TokenStore{
+		config:   c,
+		client:   &http.Client{Timeout: time.Second * 30},
+		accounts: accounts,
+	}, nil
 }
 
 func (t *TokenStore) Token(name string) (AccountAuth, error) {
@@ -82,17 +75,7 @@ func (t *TokenStore) Token(name string) (AccountAuth, error) {
 		return AccountAuth{}, fmt.Errorf("could not found account in config: %s", name)
 	}
 
-	cl, err := gomatrix.NewClient(account.Homeserver, "", "")
-	if err != nil {
-		return AccountAuth{}, err
-	}
-
-	resp, err := cl.Login(&gomatrix.ReqLogin{
-		Type:     "m.login.password",
-		User:     account.Username,
-		Password: account.Password,
-	})
-
+	resp, err := t.login(account.Homeserver, account.Username, account.Password)
 	if err != nil {
 		return AccountAuth{}, err
 	}
@@ -105,19 +88,63 @@ func (t *TokenStore) Token(name string) (AccountAuth, error) {
 
 	t.accounts = append(t.accounts, aa)
 
-	f, err := os.Create(filepath.Join(t.config.CacheDir, "accounts.json"))
-	if err != nil {
-		return AccountAuth{}, nil
-	}
-
-	defer f.Close()
-
-	enc := json.NewEncoder(f)
-	enc.SetIndent("", "  ")
-
-	if err := enc.Encode(t.accounts); err != nil {
+	if err := saveFile(filepath.Join(t.config.CacheDir, filename), t.accounts); err != nil {
 		return AccountAuth{}, err
 	}
 
 	return aa, nil
+}
+
+func (t *TokenStore) login(homeserver, username, password string) (*gomatrix.RespLogin, error) {
+	cl, err := gomatrix.NewClient(homeserver, "", "")
+	if err != nil {
+		return nil, err
+	}
+
+	return cl.Login(&gomatrix.ReqLogin{
+		Type:     "m.login.password",
+		User:     username,
+		Password: password,
+	})
+}
+
+func saveFile(path string, accounts []AccountAuth) error {
+	f, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+
+	defer f.Close()
+
+	if err := os.Chmod(path, 0600); err != nil {
+		return err
+	}
+
+	enc := json.NewEncoder(f)
+	enc.SetIndent("", "  ")
+
+	return enc.Encode(accounts)
+}
+
+func loadFromFile(path string) ([]AccountAuth, error) {
+	_, err := os.Stat(path)
+
+	if os.IsNotExist(err) {
+		return []AccountAuth{}, nil
+	} else {
+		f, err := os.Open(path)
+		if err != nil {
+			return nil, err
+		}
+
+		defer f.Close()
+
+		var accounts []AccountAuth
+
+		if err := json.NewDecoder(f).Decode(&accounts); err != nil {
+			return nil, err
+		}
+
+		return accounts, nil
+	}
 }
