@@ -34,3 +34,5 @@ Message with title
 ```sh
 $ cmd-with-long-output | matrixcli send '!test:chat.mydomain.com' --title 'Some job task'
 ```
+
+![Rich Text](.images/rich_text.png)
