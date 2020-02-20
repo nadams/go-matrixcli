@@ -6,27 +6,23 @@ import (
 
 	"github.com/jedib0t/go-pretty/table"
 	"github.com/matrix-org/gomatrix"
+
+	"github.com/nadams/go-matrixcli/auth"
+	"github.com/nadams/go-matrixcli/config"
 )
 
 type ListRooms struct{}
 
-func (l *ListRooms) Run(account Account) error {
-	cl, err := gomatrix.NewClient(account.Homeserver, "", "")
+func (l *ListRooms) Run(ts *auth.TokenStore, account config.Account) error {
+	aa, err := ts.Token(account.Username)
 	if err != nil {
 		return err
 	}
 
-	resp, err := cl.Login(&gomatrix.ReqLogin{
-		Type:     "m.login.password",
-		User:     account.Username,
-		Password: account.Password,
-	})
-
+	cl, err := gomatrix.NewClient(account.Homeserver, aa.UserID, aa.Token)
 	if err != nil {
 		return err
 	}
-
-	cl.SetCredentials(resp.UserID, resp.AccessToken)
 
 	rooms, err := cl.JoinedRooms()
 	if err != nil {
