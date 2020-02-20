@@ -14,6 +14,8 @@ import (
 	"github.com/nadams/go-matrixcli/config"
 )
 
+const appname = "matrixcli"
+
 type CLI struct {
 	Account    string `optional:"" help:"Which account to use from the config file. If omitted the first one will be used."`
 	ConfigFile string `optional:"" type:"existingfile" help:"Specify a config file instead of looking in default locations."`
@@ -31,10 +33,11 @@ func main() {
 		viper.SetConfigFile(p)
 	} else {
 		viper.SetConfigName("config")
-		viper.AddConfigPath("/etc/matrixcli")
-		viper.AddConfigPath("$HOME/.config/matrixcli")
-		viper.AddConfigPath("$HOME/.matrixcli")
 		viper.AddConfigPath(".")
+
+		for _, dir := range xdg.ConfigDirs() {
+			viper.AddConfigPath(filepath.Join(dir, appname))
+		}
 	}
 
 	viper.SetConfigType("yaml")
@@ -55,7 +58,7 @@ func main() {
 			os.Exit(1)
 		}
 
-		cfg.CacheDir = filepath.Join(cfg.CacheDir, "matrixcli")
+		cfg.CacheDir = filepath.Join(cfg.CacheDir, appname)
 
 		if err := os.MkdirAll(cfg.CacheDir, 0755); err != nil {
 			fmt.Println(err)
