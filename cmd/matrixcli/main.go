@@ -24,6 +24,7 @@ type CLI struct {
 
 	Send      cmd.Send      `cmd:"" help:"Send a message."`
 	ListRooms cmd.ListRooms `cmd:"" help:"List joined rooms"`
+	Login     cmd.Login     `cmd:"" help:"Log in to a matrix server."`
 }
 
 func main() {
@@ -53,12 +54,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	account, err := findAccount(cfg, c.Account)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-
 	if err := initCache(cfg); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -70,8 +65,20 @@ func main() {
 		os.Exit(1)
 	}
 
-	err = ctx.Run(ts, account)
-	ctx.FatalIfErrorf(err)
+	switch ctx.Command() {
+	case "login":
+		ctx.FatalIfErrorf(ctx.Run(ts))
+	default:
+		account, err := findAccount(cfg, c.Account)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+
+		err = ctx.Run(ts, account)
+		ctx.FatalIfErrorf(err)
+	}
+
 }
 
 func findAccount(cfg *config.Config, target string) (config.Account, error) {

@@ -27,10 +27,41 @@ type AccountAuth struct {
 	Token  string `json:"token"`
 }
 
+type accountAuths []AccountAuth
+
+func (a accountAuths) Find(name string) (AccountAuth, bool) {
+	for _, auth := range a {
+		if auth.Name == name {
+			return auth, true
+		}
+	}
+
+	return AccountAuth{}, false
+}
+
+func (a accountAuths) Update(auth AccountAuth) accountAuths {
+	var found bool
+
+	for i, au := range a {
+		if au.Name == auth.Name {
+			found = true
+			a[i] = auth
+
+			break
+		}
+	}
+
+	if !found {
+		a = append(a, auth)
+	}
+
+	return a
+}
+
 type TokenStore struct {
 	config   *config.Config
 	client   *http.Client
-	accounts []AccountAuth
+	accounts accountAuths
 }
 
 func NewTokenStore(c *config.Config) (*TokenStore, error) {
@@ -49,14 +80,36 @@ func NewTokenStore(c *config.Config) (*TokenStore, error) {
 	}, nil
 }
 
+func (t *TokenStore) Login(name, homeserver, username, password string) (AccountAuth, error) {
+	m.Lock()
+	defer m.Unlock()
+
+	resp, err := t.login(homeserver, username, password)
+	if err != nil {
+		return AccountAuth{}, err
+	}
+
+	aa := AccountAuth{
+		Name:   name,
+		UserID: resp.UserID,
+		Token:  resp.AccessToken,
+	}
+
+	t.accounts = t.accounts.Update(aa)
+
+	if err := t.persist(); err != nil {
+		return AccountAuth{}, err
+	}
+
+	return aa, nil
+}
+
 func (t *TokenStore) Token(name string) (AccountAuth, error) {
 	m.Lock()
 	defer m.Unlock()
 
-	for _, account := range t.accounts {
-		if account.Name == name {
-			return account, nil
-		}
+	if auth, ok := t.accounts.Find(name); ok {
+		return auth, nil
 	}
 
 	var found bool
@@ -86,9 +139,9 @@ func (t *TokenStore) Token(name string) (AccountAuth, error) {
 		Token:  resp.AccessToken,
 	}
 
-	t.accounts = append(t.accounts, aa)
+	t.accounts = t.accounts.Update(aa)
 
-	if err := saveFile(filepath.Join(t.config.CacheDir, filename), t.accounts); err != nil {
+	if err := t.persist(); err != nil {
 		return AccountAuth{}, err
 	}
 
@@ -106,6 +159,10 @@ func (t *TokenStore) login(homeserver, username, password string) (*gomatrix.Res
 		User:     username,
 		Password: password,
 	})
+}
+
+func (t *TokenStore) persist() error {
+	return saveFile(filepath.Join(t.config.CacheDir, filename), t.accounts)
 }
 
 func saveFile(path string, accounts []AccountAuth) error {
