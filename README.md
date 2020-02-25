@@ -3,36 +3,43 @@ Send and receive messages from a matrix server.
 
 ## Setup 
 
-By default the application will look in these locations for the `config.yaml` file:
+Simply log into a homeserver.
 
-| Linux(and BSD) | Mac | Windows |
-| :---: | :---: | :---: |
-| `~/.config/matrixcli/config.yaml` | `~/Library/Application Support/matrixcli/config.yaml` | `%APPDATA%\matrixcli\config.yaml` |
-| `./config.yaml`       | `./config.yaml`                           | `.\config.yaml`       |
-
-```yaml
-accounts:
-  - name: default
-    homeserver: https://chat.mydomain.com
-    username: bot
-    password: securepassword
+```sh
+$ matrixcli login https://chat.mydomain.com
 ```
+
+For all commands that need an account, you can specify an account to use with the `--account` flag. This needs to be the name your gave the account. If you don't specify an account name, the first one configured will be used.
 
 ## Send a message
 
 Simple message:
 ```sh
-$ matrixcli send '!test:chat.mydomain.com' 'my message'
+$ matrixcli send '!someid:chat.mydomain.com' 'my message'
 ```
 
 Piped from stdin
 ```sh
-$ mycmd | matrixcli send '!test:chat.mydomain.com'
+$ mycmd | matrixcli send '!someid:chat.mydomain.com'
 ```
 
 Message with title
 ```sh
-$ cmd-with-long-output | matrixcli send '!test:chat.mydomain.com' --title 'Backup Stuff'
+$ cmd-with-long-output | matrixcli send '!someid:chat.mydomain.com' --title 'Backup Stuff'
 ```
 
 ![Rich Text](.images/rich_text.png)
+
+Channel aliases are supported
+```sh
+$ matrixcli send '#mychannel:chat.mydomain.com' 'my msg'
+```
+
+Full channel ids are optional
+```sh
+$ matrixcli send '#mychannel' 'my msg'
+
+$ matrixcli send '!someid' 'my msg'
+```
+
+This pulls the domain from the homeserver configured with the account used.
