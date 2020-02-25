@@ -12,6 +12,7 @@ type Accounts struct {
 	List   ListAccounts  `cmd:"" help:"List configured accounts."`
 	Login  Login         `cmd:"" help:"Log in to a matrix server."`
 	Select SelectAccount `cmd:"" help:"Set the current account."`
+	Remove RemoveAccount `cmd:"" help:"Remove a stored account."`
 }
 
 type ListAccounts struct {
@@ -43,4 +44,12 @@ type SelectAccount struct {
 
 func (s *SelectAccount) Run(ts *auth.TokenStore) error {
 	return ts.SetCurrent(s.Name)
+}
+
+type RemoveAccount struct {
+	Name string `arg:"" help:"Account to remove."`
+}
+
+func (s *RemoveAccount) Run(ts *auth.TokenStore) error {
+	return ts.Remove(s.Name)
 }

@@ -160,6 +160,31 @@ func (t *TokenStore) SetCurrent(name string) error {
 	return t.persist()
 }
 
+func (t *TokenStore) Remove(name string) error {
+	m.Lock()
+	defer m.Unlock()
+
+	t.remove(name)
+
+	return t.persist()
+}
+
+func (t *TokenStore) remove(name string) {
+	idx := -1
+
+	for i, aa := range t.auth.Accounts {
+		if aa.Name == name {
+			idx = i
+			break
+		}
+	}
+
+	if idx > -1 {
+		copy(t.auth.Accounts[idx:], t.auth.Accounts[idx+1:])
+		t.auth.Accounts = t.auth.Accounts[:len(t.auth.Accounts)-1]
+	}
+}
+
 func (t *TokenStore) find(name string) (AccountAuth, error) {
 	if auth, ok := t.auth.Accounts.Find(name); ok {
 		return auth, nil

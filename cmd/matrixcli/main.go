@@ -39,25 +39,6 @@ func main() {
 	}
 
 	ctx.FatalIfErrorf(ctx.Run(ts))
-
-	//cmd := ctx.Command()
-
-	//switch {
-	//case
-	//  strings.HasPrefix(cmd, "accounts login"),
-	//  strings.HasPrefix(cmd, "accounts list"),
-	//  strings.HasPrefix(cmd, "accounts select"):
-	//  ctx.FatalIfErrorf(ctx.Run(ts))
-	//default:
-	//  account, err := findAccount(ts, c.Account)
-	//  if err != nil {
-	//    fmt.Println(err)
-	//    os.Exit(1)
-	//  }
-
-	//  err = ctx.Run(ts, account)
-	//  ctx.FatalIfErrorf(err)
-	//}
 }
 
 func initConfig(dir string) (string, error) {
