@@ -89,6 +89,10 @@ func NewTokenStore(dir string) (*TokenStore, error) {
 	}, nil
 }
 
+func (t *TokenStore) List() []AccountAuth {
+	return t.accounts
+}
+
 func (t *TokenStore) Login(name, homeserver, username, password string) (AccountAuth, error) {
 	m.Lock()
 	defer m.Unlock()
