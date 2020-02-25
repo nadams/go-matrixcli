@@ -9,7 +9,6 @@ import (
 	"github.com/matrix-org/gomatrix"
 
 	"github.com/nadams/go-matrixcli/auth"
-	"github.com/nadams/go-matrixcli/config"
 	"github.com/nadams/go-matrixcli/matrixext"
 )
 
@@ -19,13 +18,8 @@ type Send struct {
 	Msg   string `arg:"" optional:"" name:"msg" help:"Text to send to room. Leave empty to read from stdin."`
 }
 
-func (s *Send) Run(ts *auth.TokenStore, account config.Account) error {
-	aa, err := ts.Token(account.Name)
-	if err != nil {
-		return err
-	}
-
-	cl, err := gomatrix.NewClient(account.Homeserver, aa.UserID, aa.Token)
+func (s *Send) Run(aa auth.AccountAuth) error {
+	cl, err := gomatrix.NewClient(aa.Homeserver, aa.UserID, aa.Token)
 	if err != nil {
 		return err
 	}
@@ -42,8 +36,17 @@ func (s *Send) Run(ts *auth.TokenStore, account config.Account) error {
 
 	room := s.Room
 
-	if strings.HasPrefix(s.Room, "#") {
-		r, err := matrixext.GetRoomByAlias(cl, s.Room)
+	if !strings.Contains(room, ":") {
+		domain, err := aa.Domain()
+		if err != nil {
+			return err
+		}
+
+		room = fmt.Sprintf("%s:%s", s.Room, domain)
+	}
+
+	if strings.HasPrefix(room, "#") {
+		r, err := matrixext.GetRoomByAlias(cl, room)
 		if err != nil {
 			return fmt.Errorf("could not resolve room alias: %w", err)
 		}

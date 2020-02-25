@@ -8,18 +8,12 @@ import (
 	"github.com/matrix-org/gomatrix"
 
 	"github.com/nadams/go-matrixcli/auth"
-	"github.com/nadams/go-matrixcli/config"
 )
 
 type ListRooms struct{}
 
-func (l *ListRooms) Run(ts *auth.TokenStore, account config.Account) error {
-	aa, err := ts.Token(account.Username)
-	if err != nil {
-		return err
-	}
-
-	cl, err := gomatrix.NewClient(account.Homeserver, aa.UserID, aa.Token)
+func (l *ListRooms) Run(aa auth.AccountAuth) error {
+	cl, err := gomatrix.NewClient(aa.Homeserver, aa.UserID, aa.Token)
 	if err != nil {
 		return err
 	}

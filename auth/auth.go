@@ -2,15 +2,14 @@ package auth
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"sync"
 	"time"
 
 	"github.com/matrix-org/gomatrix"
-	"github.com/nadams/go-matrixcli/config"
 )
 
 const filename = "accounts.json"
@@ -22,9 +21,19 @@ type Auth struct {
 }
 
 type AccountAuth struct {
-	Name   string `json:"name"`
-	UserID string `json:"userId"`
-	Token  string `json:"token"`
+	Name       string `json:"name"`
+	Homeserver string `json:"homeserver"`
+	UserID     string `json:"userId"`
+	Token      string `json:"token"`
+}
+
+func (a AccountAuth) Domain() (string, error) {
+	u, err := url.Parse(a.Homeserver)
+	if err != nil {
+		return "", err
+	}
+
+	return u.Hostname(), nil
 }
 
 type accountAuths []AccountAuth
@@ -59,25 +68,29 @@ func (a accountAuths) Update(auth AccountAuth) accountAuths {
 }
 
 type TokenStore struct {
-	config   *config.Config
+	dir      string
 	client   *http.Client
 	accounts accountAuths
 }
 
-func NewTokenStore(c *config.Config) (*TokenStore, error) {
+func NewTokenStore(dir string) (*TokenStore, error) {
 	m.Lock()
 	defer m.Unlock()
 
-	accounts, err := loadFromFile(filepath.Join(c.CacheDir, filename))
+	accounts, err := loadFromFile(filepath.Join(dir, filename))
 	if err != nil {
 		return nil, err
 	}
 
 	return &TokenStore{
-		config:   c,
+		dir:      dir,
 		client:   &http.Client{Timeout: time.Second * 30},
 		accounts: accounts,
 	}, nil
+}
+
+func (t *TokenStore) List() []AccountAuth {
+	return t.accounts
 }
 
 func (t *TokenStore) Login(name, homeserver, username, password string) (AccountAuth, error) {
@@ -90,9 +103,10 @@ func (t *TokenStore) Login(name, homeserver, username, password string) (Account
 	}
 
 	aa := AccountAuth{
-		Name:   name,
-		UserID: resp.UserID,
-		Token:  resp.AccessToken,
+		Name:       name,
+		Homeserver: homeserver,
+		UserID:     resp.UserID,
+		Token:      resp.AccessToken,
 	}
 
 	t.accounts = t.accounts.Update(aa)
@@ -104,7 +118,7 @@ func (t *TokenStore) Login(name, homeserver, username, password string) (Account
 	return aa, nil
 }
 
-func (t *TokenStore) Token(name string) (AccountAuth, error) {
+func (t *TokenStore) Find(name string) (AccountAuth, error) {
 	m.Lock()
 	defer m.Unlock()
 
@@ -112,40 +126,18 @@ func (t *TokenStore) Token(name string) (AccountAuth, error) {
 		return auth, nil
 	}
 
-	var found bool
-	var account config.Account
+	return AccountAuth{}, ErrAccountNotFound
+}
 
-	for _, a := range t.config.Accounts {
-		if a.Name == name {
-			found = true
-			account = a
+func (t *TokenStore) First() (AccountAuth, error) {
+	m.Lock()
+	defer m.Unlock()
 
-			break
-		}
+	if len(t.accounts) == 0 {
+		return AccountAuth{}, ErrNoAccounts
 	}
 
-	if !found {
-		return AccountAuth{}, fmt.Errorf("could not found account in config: %s", name)
-	}
-
-	resp, err := t.login(account.Homeserver, account.Username, account.Password)
-	if err != nil {
-		return AccountAuth{}, err
-	}
-
-	aa := AccountAuth{
-		Name:   name,
-		UserID: resp.UserID,
-		Token:  resp.AccessToken,
-	}
-
-	t.accounts = t.accounts.Update(aa)
-
-	if err := t.persist(); err != nil {
-		return AccountAuth{}, err
-	}
-
-	return aa, nil
+	return t.accounts[0], nil
 }
 
 func (t *TokenStore) login(homeserver, username, password string) (*gomatrix.RespLogin, error) {
@@ -162,7 +154,7 @@ func (t *TokenStore) login(homeserver, username, password string) (*gomatrix.Res
 }
 
 func (t *TokenStore) persist() error {
-	return saveFile(filepath.Join(t.config.CacheDir, filename), t.accounts)
+	return saveFile(filepath.Join(t.dir, filename), t.accounts)
 }
 
 func saveFile(path string, accounts []AccountAuth) error {
