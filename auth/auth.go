@@ -3,6 +3,7 @@ package auth
 import (
 	"encoding/json"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"sync"
@@ -24,6 +25,15 @@ type AccountAuth struct {
 	Homeserver string `json:"homeserver"`
 	UserID     string `json:"userId"`
 	Token      string `json:"token"`
+}
+
+func (a AccountAuth) Domain() (string, error) {
+	u, err := url.Parse(a.Homeserver)
+	if err != nil {
+		return "", err
+	}
+
+	return u.Hostname(), nil
 }
 
 type accountAuths []AccountAuth

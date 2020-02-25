@@ -36,8 +36,17 @@ func (s *Send) Run(aa auth.AccountAuth) error {
 
 	room := s.Room
 
-	if strings.HasPrefix(s.Room, "#") {
-		r, err := matrixext.GetRoomByAlias(cl, s.Room)
+	if !strings.Contains(room, ":") {
+		domain, err := aa.Domain()
+		if err != nil {
+			return err
+		}
+
+		room = fmt.Sprintf("%s:%s", s.Room, domain)
+	}
+
+	if strings.HasPrefix(room, "#") {
+		r, err := matrixext.GetRoomByAlias(cl, room)
 		if err != nil {
 			return fmt.Errorf("could not resolve room alias: %w", err)
 		}
