@@ -19,10 +19,10 @@ type CLI struct {
 	Account   string `optional:"" help:"Which account to use from the config file. If omitted the first one will be used."`
 	ConfigDir string `optional:"" type:"existingdir" help:"Specify an alternate cache dir location."`
 
-	Send         cmd.Send         `cmd:"" help:"Send a message."`
-	ListRooms    cmd.ListRooms    `cmd:"" help:"List joined rooms"`
-	Login        cmd.Login        `cmd:"" help:"Log in to a matrix server."`
-	ListAccounts cmd.ListAccounts `cmd:"" help:"List configured accounts."`
+	Send      cmd.Send      `cmd:"" help:"Send a message."`
+	Rooms     cmd.Rooms     `cmd:"" help:"Operate on rooms."`
+	ListRooms cmd.ListRooms `cmd:"" help:"List joined rooms."`
+	Accounts  cmd.Accounts  `cmd:"" help:"Operate on configured accounts."`
 }
 
 func main() {
@@ -44,7 +44,7 @@ func main() {
 	cmd := ctx.Command()
 
 	switch {
-	case strings.HasPrefix(cmd, "login"), strings.HasPrefix(cmd, "list-accounts"):
+	case strings.HasPrefix(cmd, "accounts login"), strings.HasPrefix(cmd, "accounts list"):
 		ctx.FatalIfErrorf(ctx.Run(ts))
 	default:
 		account, err := findAccount(ts, c.Account)

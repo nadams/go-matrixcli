@@ -8,6 +8,11 @@ import (
 	"github.com/nadams/go-matrixcli/auth"
 )
 
+type Accounts struct {
+	List  ListAccounts `cmd:"" help:"List configured accounts."`
+	Login Login        `cmd:"" help:"Log in to a matrix server."`
+}
+
 type ListAccounts struct {
 }
 

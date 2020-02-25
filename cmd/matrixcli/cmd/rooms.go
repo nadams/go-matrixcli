@@ -10,6 +10,10 @@ import (
 	"github.com/nadams/go-matrixcli/auth"
 )
 
+type Rooms struct {
+	List ListRooms `cmd:"" help:"List joined rooms."`
+}
+
 type ListRooms struct{}
 
 func (l *ListRooms) Run(aa auth.AccountAuth) error {
