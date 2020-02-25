@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/OpenPeeDeeP/xdg"
 	"github.com/alecthomas/kong"
@@ -16,13 +15,11 @@ import (
 const appname = "matrixcli"
 
 type CLI struct {
-	Account   string `optional:"" help:"Which account to use from the config file. If omitted the first one will be used."`
 	ConfigDir string `optional:"" type:"existingdir" help:"Specify an alternate cache dir location."`
 
-	Send      cmd.Send      `cmd:"" help:"Send a message."`
-	Rooms     cmd.Rooms     `cmd:"" help:"Operate on rooms."`
-	ListRooms cmd.ListRooms `cmd:"" help:"List joined rooms."`
-	Accounts  cmd.Accounts  `cmd:"" help:"Operate on configured accounts."`
+	Send     cmd.Send     `cmd:"" help:"Send a message."`
+	Rooms    cmd.Rooms    `cmd:"" help:"Operate on rooms."`
+	Accounts cmd.Accounts `cmd:"" help:"Operate on configured accounts."`
 }
 
 func main() {
@@ -41,34 +38,26 @@ func main() {
 		os.Exit(1)
 	}
 
-	cmd := ctx.Command()
+	ctx.FatalIfErrorf(ctx.Run(ts))
 
-	switch {
-	case strings.HasPrefix(cmd, "accounts login"), strings.HasPrefix(cmd, "accounts list"):
-		ctx.FatalIfErrorf(ctx.Run(ts))
-	default:
-		account, err := findAccount(ts, c.Account)
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
+	//cmd := ctx.Command()
 
-		err = ctx.Run(ts, account)
-		ctx.FatalIfErrorf(err)
-	}
-}
+	//switch {
+	//case
+	//  strings.HasPrefix(cmd, "accounts login"),
+	//  strings.HasPrefix(cmd, "accounts list"),
+	//  strings.HasPrefix(cmd, "accounts select"):
+	//  ctx.FatalIfErrorf(ctx.Run(ts))
+	//default:
+	//  account, err := findAccount(ts, c.Account)
+	//  if err != nil {
+	//    fmt.Println(err)
+	//    os.Exit(1)
+	//  }
 
-func findAccount(ts *auth.TokenStore, target string) (auth.AccountAuth, error) {
-	var a auth.AccountAuth
-	var err error
-
-	if target == "" {
-		a, err = ts.First()
-	} else {
-		a, err = ts.Find(target)
-	}
-
-	return a, err
+	//  err = ctx.Run(ts, account)
+	//  ctx.FatalIfErrorf(err)
+	//}
 }
 
 func initConfig(dir string) (string, error) {

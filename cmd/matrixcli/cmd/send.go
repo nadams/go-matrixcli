@@ -13,12 +13,26 @@ import (
 )
 
 type Send struct {
-	Room  string `arg:"" name:"room" help:"Can be a room ID or a room alias."`
-	Title string `help:"Use rich formatting. If used, msg will be wrapped in a <blockquote> tag."`
-	Msg   string `arg:"" optional:"" name:"msg" help:"Text to send to room. Leave empty to read from stdin."`
+	Account string `optional:"" short:"a" help:"Which account to send from."`
+	Title   string `help:"Use rich formatting. If used, msg will be wrapped in a <blockquote> tag."`
+	Room    string `arg:"" name:"room" help:"Can be a room ID or a room alias."`
+	Msg     string `arg:"" optional:"" name:"msg" help:"Text to send to room. Leave empty to read from stdin."`
 }
 
-func (s *Send) Run(aa auth.AccountAuth) error {
+func (s *Send) Run(ts *auth.TokenStore) error {
+	var aa auth.AccountAuth
+	var err error
+
+	if s.Account == "" {
+		aa, err = ts.Current()
+	} else {
+		aa, err = ts.Find(s.Account)
+	}
+
+	if err != nil {
+		return err
+	}
+
 	cl, err := gomatrix.NewClient(aa.Homeserver, aa.UserID, aa.Token)
 	if err != nil {
 		return err

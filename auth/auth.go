@@ -17,7 +17,8 @@ const filename = "accounts.json"
 var m sync.Mutex
 
 type Auth struct {
-	Accounts []AccountAuth `json:"accounts"`
+	Current  string       `json:"current_account"`
+	Accounts AccountAuths `json:"accounts"`
 }
 
 type AccountAuth struct {
@@ -36,9 +37,9 @@ func (a AccountAuth) Domain() (string, error) {
 	return u.Hostname(), nil
 }
 
-type accountAuths []AccountAuth
+type AccountAuths []AccountAuth
 
-func (a accountAuths) Find(name string) (AccountAuth, bool) {
+func (a AccountAuths) Find(name string) (AccountAuth, bool) {
 	for _, auth := range a {
 		if auth.Name == name {
 			return auth, true
@@ -48,7 +49,7 @@ func (a accountAuths) Find(name string) (AccountAuth, bool) {
 	return AccountAuth{}, false
 }
 
-func (a accountAuths) Update(auth AccountAuth) accountAuths {
+func (a AccountAuths) Update(auth AccountAuth) AccountAuths {
 	var found bool
 
 	for i, au := range a {
@@ -68,29 +69,39 @@ func (a accountAuths) Update(auth AccountAuth) accountAuths {
 }
 
 type TokenStore struct {
-	dir      string
-	client   *http.Client
-	accounts accountAuths
+	dir    string
+	client *http.Client
+	auth   Auth
 }
 
 func NewTokenStore(dir string) (*TokenStore, error) {
 	m.Lock()
 	defer m.Unlock()
 
-	accounts, err := loadFromFile(filepath.Join(dir, filename))
+	auth, err := loadFromFile(filepath.Join(dir, filename))
 	if err != nil {
 		return nil, err
 	}
 
 	return &TokenStore{
-		dir:      dir,
-		client:   &http.Client{Timeout: time.Second * 30},
-		accounts: accounts,
+		dir:    dir,
+		client: &http.Client{Timeout: time.Second * 30},
+		auth:   auth,
 	}, nil
 }
 
-func (t *TokenStore) List() []AccountAuth {
-	return t.accounts
+func (t *TokenStore) List() AccountAuths {
+	m.Lock()
+	defer m.Unlock()
+
+	return t.auth.Accounts
+}
+
+func (t *TokenStore) CurrentName() string {
+	m.Lock()
+	defer m.Unlock()
+
+	return t.auth.Current
 }
 
 func (t *TokenStore) Login(name, homeserver, username, password string) (AccountAuth, error) {
@@ -109,7 +120,11 @@ func (t *TokenStore) Login(name, homeserver, username, password string) (Account
 		Token:      resp.AccessToken,
 	}
 
-	t.accounts = t.accounts.Update(aa)
+	t.auth.Accounts = t.auth.Accounts.Update(aa)
+
+	if len(t.auth.Accounts) == 1 {
+		t.auth.Current = aa.Name
+	}
 
 	if err := t.persist(); err != nil {
 		return AccountAuth{}, err
@@ -122,22 +137,52 @@ func (t *TokenStore) Find(name string) (AccountAuth, error) {
 	m.Lock()
 	defer m.Unlock()
 
-	if auth, ok := t.accounts.Find(name); ok {
+	return t.find(name)
+}
+
+func (t *TokenStore) Current() (AccountAuth, error) {
+	m.Lock()
+	defer m.Unlock()
+
+	return t.current()
+}
+
+func (t *TokenStore) SetCurrent(name string) error {
+	m.Lock()
+	defer m.Unlock()
+
+	if _, ok := t.auth.Accounts.Find(name); !ok {
+		return ErrAccountNotFound
+	}
+
+	t.auth.Current = name
+
+	return t.persist()
+}
+
+func (t *TokenStore) find(name string) (AccountAuth, error) {
+	if auth, ok := t.auth.Accounts.Find(name); ok {
 		return auth, nil
 	}
 
 	return AccountAuth{}, ErrAccountNotFound
 }
 
-func (t *TokenStore) First() (AccountAuth, error) {
-	m.Lock()
-	defer m.Unlock()
-
-	if len(t.accounts) == 0 {
+func (t *TokenStore) current() (AccountAuth, error) {
+	if len(t.auth.Accounts) == 0 {
 		return AccountAuth{}, ErrNoAccounts
 	}
 
-	return t.accounts[0], nil
+	if t.auth.Current == "" {
+		return t.auth.Accounts[0], nil
+	}
+
+	auth, ok := t.auth.Accounts.Find(t.auth.Current)
+	if !ok {
+		return AccountAuth{}, ErrAccountNotFound
+	}
+
+	return auth, nil
 }
 
 func (t *TokenStore) login(homeserver, username, password string) (*gomatrix.RespLogin, error) {
@@ -154,10 +199,10 @@ func (t *TokenStore) login(homeserver, username, password string) (*gomatrix.Res
 }
 
 func (t *TokenStore) persist() error {
-	return saveFile(filepath.Join(t.dir, filename), t.accounts)
+	return saveFile(filepath.Join(t.dir, filename), t.auth)
 }
 
-func saveFile(path string, accounts []AccountAuth) error {
+func saveFile(path string, auth Auth) error {
 	f, err := os.Create(path)
 	if err != nil {
 		return err
@@ -172,28 +217,28 @@ func saveFile(path string, accounts []AccountAuth) error {
 	enc := json.NewEncoder(f)
 	enc.SetIndent("", "  ")
 
-	return enc.Encode(accounts)
+	return enc.Encode(auth)
 }
 
-func loadFromFile(path string) ([]AccountAuth, error) {
+func loadFromFile(path string) (Auth, error) {
 	_, err := os.Stat(path)
 
 	if os.IsNotExist(err) {
-		return []AccountAuth{}, nil
+		return Auth{}, nil
 	} else {
 		f, err := os.Open(path)
 		if err != nil {
-			return nil, err
+			return Auth{}, err
 		}
 
 		defer f.Close()
 
-		var accounts []AccountAuth
+		var auth Auth
 
-		if err := json.NewDecoder(f).Decode(&accounts); err != nil {
-			return nil, err
+		if err := json.NewDecoder(f).Decode(&auth); err != nil {
+			return Auth{}, err
 		}
 
-		return accounts, nil
+		return auth, nil
 	}
 }
