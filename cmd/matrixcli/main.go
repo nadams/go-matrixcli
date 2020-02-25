@@ -16,8 +16,8 @@ import (
 const appname = "matrixcli"
 
 type CLI struct {
-	Account  string `optional:"" help:"Which account to use from the config file. If omitted the first one will be used."`
-	CacheDir string `optional:"" type:"existingdir" help:"Specify an alternate cache dir location."`
+	Account   string `optional:"" help:"Which account to use from the config file. If omitted the first one will be used."`
+	ConfigDir string `optional:"" type:"existingdir" help:"Specify an alternate cache dir location."`
 
 	Send      cmd.Send      `cmd:"" help:"Send a message."`
 	ListRooms cmd.ListRooms `cmd:"" help:"List joined rooms"`
@@ -29,7 +29,7 @@ func main() {
 	c := &CLI{}
 	ctx := kong.Parse(c)
 
-	dir, err := initCache(c.CacheDir)
+	dir, err := initConfig(c.ConfigDir)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -71,9 +71,9 @@ func findAccount(ts *auth.TokenStore, target string) (auth.AccountAuth, error) {
 	return a, err
 }
 
-func initCache(dir string) (string, error) {
+func initConfig(dir string) (string, error) {
 	if dir == "" {
-		dir = filepath.Join(xdg.CacheHome(), appname)
+		dir = filepath.Join(xdg.ConfigHome(), appname)
 	}
 
 	if err := os.MkdirAll(dir, 0755); err != nil {
