@@ -74,7 +74,7 @@ type TokenStore struct {
 	auth   Auth
 }
 
-func NewTokenStore(dir string) (*TokenStore, error) {
+func NewTokenStore(dir string, client *http.Client) (*TokenStore, error) {
 	m.Lock()
 	defer m.Unlock()
 
@@ -83,9 +83,13 @@ func NewTokenStore(dir string) (*TokenStore, error) {
 		return nil, err
 	}
 
+	if client == nil {
+		client = &http.Client{Timeout: time.Second * 30}
+	}
+
 	return &TokenStore{
 		dir:    dir,
-		client: &http.Client{Timeout: time.Second * 30},
+		client: client,
 		auth:   auth,
 	}, nil
 }

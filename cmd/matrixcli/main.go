@@ -32,7 +32,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	ts, err := auth.NewTokenStore(dir)
+	ts, err := auth.NewTokenStore(dir, nil)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
