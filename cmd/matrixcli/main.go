@@ -12,7 +12,21 @@ import (
 	"github.com/nadams/go-matrixcli/cmd/matrixcli/cmd"
 )
 
+var (
+	version = "dev"
+	commit  = "none"
+	date    = "unknown"
+)
+
 const appname = "matrixcli"
+
+type printVersion struct{}
+
+func (v *printVersion) Run() error {
+	fmt.Printf("Version: %s\nCommit: %s\nDate: %s\n", version, commit, date)
+
+	return nil
+}
 
 type CLI struct {
 	ConfigDir string `optional:"" type:"existingdir" help:"Specify an alternate cache dir location."`
@@ -20,11 +34,17 @@ type CLI struct {
 	Send     cmd.Send     `cmd:"" help:"Send a message."`
 	Rooms    cmd.Rooms    `cmd:"" help:"Operate on rooms."`
 	Accounts cmd.Accounts `cmd:"" help:"Operate on configured accounts."`
+	Version  printVersion `cmd:"" help:"Print version information and exit."`
 }
 
 func main() {
 	c := &CLI{}
 	ctx := kong.Parse(c)
+
+	if ctx.Command() == "version" {
+		ctx.FatalIfErrorf(ctx.Run())
+		os.Exit(0)
+	}
 
 	dir, err := initConfig(c.ConfigDir)
 	if err != nil {
