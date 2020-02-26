@@ -15,8 +15,7 @@ type Accounts struct {
 	Remove RemoveAccount `cmd:"" help:"Remove a stored account."`
 }
 
-type ListAccounts struct {
-}
+type ListAccounts struct{}
 
 func (l *ListAccounts) Run(ts *auth.TokenStore) error {
 	t := table.NewWriter()

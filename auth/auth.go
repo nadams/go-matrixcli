@@ -187,6 +187,10 @@ func (t *TokenStore) remove(name string) {
 		copy(t.auth.Accounts[idx:], t.auth.Accounts[idx+1:])
 		t.auth.Accounts = t.auth.Accounts[:len(t.auth.Accounts)-1]
 	}
+
+	if len(t.auth.Accounts) > 0 {
+		t.auth.Current = t.auth.Accounts[0].Name
+	}
 }
 
 func (t *TokenStore) find(name string) (AccountAuth, error) {
