@@ -1,4 +1,4 @@
-# go-matrixcli
+# matrixcli
 Send and receive messages from a matrix server.
 
 ## Setup 
@@ -6,14 +6,38 @@ Send and receive messages from a matrix server.
 Simply log into a homeserver.
 
 ```sh
-$ matrixcli login https://chat.mydomain.com
+$ matrixcli accounts login https://chat.mydomain.com
 ```
 
-For all commands that need an account, you can specify an account to use with the `--account` flag. This needs to be the name your gave the account. If you don't specify an account name, the first one configured will be used.
+Commands that deal with a server need an account to work with. By default the program will select the "current" account to work with. You can set the current account by looking below. If you wish to use a different account without changing the current accout, pass in the `--account <name>` flag. The name refers to the account name seen in the account list.
 
-## Send a message
+## List Accounts
 
-Simple message:
+```sh
+$ matrixcli accounts list
+
++------------------+---------------------------+-------------------------------------+---------+
+| NAME             | HOMESERVER                | USERID                              | CURRENT |
++------------------+---------------------------+-------------------------------------+---------+
+| my-account       | https://chat.mydomain.com | @my-account:chat.mydomain.com       |         |
+| my-other-account | https://chat.mydomain.com | @my-other-account:chat.mydomain.com | *       |
++------------------+---------------------------+-------------------------------------+---------+
+```
+
+## Set Current Account
+```sh
+$ matrixcli account select my-account
+```
+
+## Remove Account
+
+```sh
+$ matrixcli accounts remove my-account
+```
+
+## Send Messages
+
+Simple message
 ```sh
 $ matrixcli send '!someid:chat.mydomain.com' 'my message'
 ```
@@ -43,3 +67,8 @@ $ matrixcli send '!someid' 'my msg'
 ```
 
 This pulls the domain from the homeserver configured with the account used.
+
+Alternate account
+```sh
+$ matrixcli send --account my-account '#mychannel:chat.mydomain.com' 'hello there'
+```
