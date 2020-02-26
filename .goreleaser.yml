@@ -15,12 +15,12 @@ builds:
       - amd64
       - 386
 archives:
-- replacements:
-    darwin: Darwin
-    linux: Linux
-    windows: Windows
-    386: i386
-    amd64: x86_64
+  - replacements:
+      darwin: Darwin
+      linux: Linux
+      windows: Windows
+      386: i386
+      amd64: x86_64
 checksum:
   name_template: 'checksums.txt'
 snapshot:
@@ -31,6 +31,11 @@ changelog:
     exclude:
     - '^docs:'
     - '^test:'
-gitlab_urls:
-  api: https://gitlab.node-3.net/api/v4/
-  download: https://gitlab.node-3.net
+nfpms:
+  - vendor: Nick Adams
+    homepage: https://github.com/nadams/go-matrixcli
+    maintainer: "Nick Adams <nadams@node-3.net>"
+    license: Apache-2.0
+    formats:
+      - deb
+      - rpm
