@@ -1,6 +1,12 @@
 # matrixcli
 Send and receive messages from a matrix server.
 
+- [x] Send messages
+- [x] Multiple account/server support
+- [ ] Tail messages
+- [ ] Filter incoming messages
+- [ ] Join/leave rooms
+
 ## Setup 
 
 Simply log into a homeserver.
