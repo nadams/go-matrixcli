@@ -77,7 +77,7 @@ func (s *Send) Run(ts *auth.TokenStore) error {
 				<html>
 					<body>
 						<h1>%s</h1>
-						<blockquote>%s</blockquote>
+						<pre>%s</pre>
 					</body>
 				</html>`,
 				s.Title,
