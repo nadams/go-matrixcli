@@ -1,41 +1,56 @@
 before:
   hooks:
-    - go mod download
+    - 'go mod tidy'
+
 builds:
-  - dir: cmd/matrixcli
-    main: main.go
-    binary: matrixcli
-    env:
-      - CGO_ENABLED=0
+  - env:
+      - 'CGO_ENABLED=0'
+    dir: 'cmd/matrixcli'
+    main: 'main.go'
+    binary: 'matrixcli'
     goos:
-      - linux
-      - darwin
-      - windows
-    goarch:
-      - amd64
-      - 386
+      - 'linux'
+      - 'darwin'
+      - 'windows'
 archives:
-  - replacements:
-      darwin: Darwin
-      linux: Linux
-      windows: Windows
-      386: i386
-      amd64: x86_64
+  - name_template: >-
+      {{ .ProjectName | tolower }}_
+      {{- .Version }}_
+      {{- title .Os | tolower }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+    wrap_in_directory: true
+
 checksum:
   name_template: 'checksums.txt'
+
 snapshot:
-  name_template: "{{ .Tag }}-next"
+  name_template: "{{ incpatch .Version }}-next"
+
 changelog:
   sort: asc
   filters:
     exclude:
     - '^docs:'
     - '^test:'
+
 nfpms:
   - vendor: Nick Adams
     homepage: https://github.com/nadams/go-matrixcli
     maintainer: "Nick Adams <nadams@node-3.net>"
-    license: Apache-2.0
+    description: |-
+      Interact with matrix servers from the cli
+    license: 'Apache-2.0'
+    archlinux:
+      packager: 'Nick Adams <nadams@node-3.net>'
     formats:
-      - deb
-      - rpm
+      - 'deb'
+      - 'rpm'
+      - 'archlinux'
+
+gitlab_urls:
+  api: 'https://gitlab.node-3.net/api/v4/'
+  download: 'https://gitlab.node-3.net'
+  skip_tls_verify: false
+  use_package_registry: false
